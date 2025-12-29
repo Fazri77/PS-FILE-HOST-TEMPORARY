@@ -1,5 +1,3 @@
-// History UI + persistence for file host
-// This module expects the page DOM to contain the same IDs used by the original UI.
 
 const HistoryModule = (() => {
   const elements = {
