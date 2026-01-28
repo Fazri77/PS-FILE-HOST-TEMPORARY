@@ -288,10 +288,10 @@ elements.form.addEventListener("submit", (e) => {
     resetForm();
   });
 
-  // Choose backend: local server by default, or Uguu API if enabled
-  const USE_UGUU = false; // set to true to upload directly to https://uguu.se
+  // Choose backend: local server by default, or Uguu API via server proxy
+  const USE_UGUU = false; // set to true to upload via /upload-uguu proxy endpoint
   const UPLOAD_URL = USE_UGUU
-    ? "https://uguu.se/api.php"
+    ? `${location.origin}/upload-uguu`
     : `${location.origin}/upload`;
 
   xhr.open("POST", UPLOAD_URL);

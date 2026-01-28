@@ -4,6 +4,8 @@ const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
 const { v4: uuidv4 } = require("uuid");
+const FormData = require("form-data");
+const fetch = require("node-fetch");
 require("dotenv").config();
 
 const app = express();
@@ -82,6 +84,73 @@ app.post("/upload", upload.single("files[]"), (req, res) => {
       },
     ],
   });
+});
+
+/* ======================
+   UGUU PROXY API
+====================== */
+app.post("/upload-uguu", upload.single("files[]"), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({
+      success: false,
+      description: "File tidak ditemukan",
+    });
+  }
+
+  try {
+    // Create FormData untuk upload ke Uguu
+    const form = new FormData();
+    form.append("files[]", fs.createReadStream(req.file.path));
+
+    // Forward ke Uguu API dengan headers dari FormData
+    const response = await fetch("https://uguu.se/api.php", {
+      method: "POST",
+      body: form,
+      headers: form.getHeaders(),
+    });
+
+    // Baca response dari Uguu
+    const responseText = await response.text();
+
+    if (response.ok) {
+      const uguuUrl = responseText.trim();
+      
+      // Delete file dari server setelah berhasil upload ke Uguu
+      if (fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+
+      // Return dalam format JSON yang sama seperti /upload
+      res.json({
+        success: true,
+        files: [
+          {
+            url: uguuUrl,
+            expiresAt: Date.now() + (24 * 60 * 60 * 1000), // Uguu default 24 jam
+          },
+        ],
+      });
+    } else {
+      // Delete local file jika Uguu gagal
+      if (fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      res.status(response.status).json({
+        success: false,
+        description: `Uguu API error: ${responseText}`,
+      });
+    }
+  } catch (error) {
+    // Delete local file jika ada error
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    console.error("Uguu upload error:", error.message);
+    res.status(500).json({
+      success: false,
+      description: "Gagal upload ke Uguu API",
+    });
+  }
 });
 
 /* ======================
