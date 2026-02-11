@@ -1,5 +1,5 @@
 <h1> FILE HOST TEMPORARY </h1>
-<h2>Fitur Utama</h2>
+<h2>Fitur Utamaa</h2>
 
 <h3>📁 Manajemen File</h3>
 <p>
